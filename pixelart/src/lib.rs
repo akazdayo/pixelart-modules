@@ -1,8 +1,8 @@
 use numpy::{
-    ndarray::{ArrayBase, Dim, ViewRepr},
-    PyReadonlyArray2, PyReadonlyArray3,
+    ndarray::{Array3, ArrayBase, Dim, ViewRepr},
+    PyReadonlyArray2,
 };
-use pyo3::{ffi::PyObject, prelude::*};
+use pyo3::prelude::*;
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
@@ -35,22 +35,22 @@ fn color_change<'py>(
 
 #[pyfunction]
 fn convert<'py>(
-    img: PyReadonlyArray3<'py, usize>,
+    img: Bound<'_, PyAny>, // NumPy Array
     color_palette: PyReadonlyArray2<'py, usize>,
 ) -> PyResult<()> {
     // NumPy配列をndarrayに変換
     let color_palette = color_palette.as_array();
-    let img = img.as_array();
-    let mut changed = img.to_owned();
-
-    let (h, w, _) = img.dim();
+    //let img = img.as_array();
+    let shape: (usize, usize, usize) = img.getattr("shape")?.extract()?;
+    let (h, w, _) = shape;
+    let mut changed: Array3<usize> = Array3::zeros((h, w, 3));
 
     for y in 0..h {
         for x in 0..w {
             let color = color_change(
-                img[[y, x, 0]] as f64,
-                img[[y, x, 1]] as f64,
-                img[[y, x, 2]] as f64,
+                img.get_item((y, x, 0))?.extract::<usize>()? as f64,
+                img.get_item((y, x, 1))?.extract::<usize>()? as f64,
+                img.get_item((y, x, 2))?.extract::<usize>()? as f64,
                 &color_palette,
             )
             .unwrap();
@@ -64,19 +64,10 @@ fn convert<'py>(
     Ok(())
 }
 
-#[pyfunction]
-fn obj_test<'py>(obj: Bound<'_, PyAny>) -> PyResult<()> {
-    let a = obj.call_method1("__getitem__", ((1, 0),))?;
-    let a = a.extract::<usize>()?;
-    println!("{:?}", a - 5);
-    Ok(())
-}
-
 /// A Python module implemented in Rust.
 #[pymodule]
 fn pixelart(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_function(wrap_pyfunction!(convert, m)?)?;
-    m.add_function(wrap_pyfunction!(obj_test, m)?)?;
     Ok(())
 }
