@@ -4,12 +4,6 @@ use numpy::{
 };
 use pyo3::prelude::*;
 
-/// Formats the sum of two numbers as string.
-#[pyfunction]
-fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
-    Ok((a + b).to_string())
-}
-
 fn color_change<'py>(
     r: f64,
     g: f64,
@@ -37,12 +31,15 @@ fn color_change<'py>(
 fn convert<'py>(
     img: Bound<'_, PyAny>, // NumPy Array
     color_palette: PyReadonlyArray2<'py, usize>,
-) -> PyResult<()> {
+) -> PyResult<Array3<usize>> {
     // NumPy配列をndarrayに変換
     let color_palette = color_palette.as_array();
-    //let img = img.as_array();
+
+    // 画像のサイズを取得
     let shape: (usize, usize, usize) = img.getattr("shape")?.extract()?;
     let (h, w, _) = shape;
+
+    // 出力用のndarrayを作成
     let mut changed: Array3<usize> = Array3::zeros((h, w, 3));
 
     for y in 0..h {
@@ -59,15 +56,12 @@ fn convert<'py>(
             changed[[y, x, 2]] = color[2];
         }
     }
-    println!("{:?}", changed);
-
-    Ok(())
+    Ok(changed)
 }
 
 /// A Python module implemented in Rust.
 #[pymodule]
 fn pixelart(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_function(wrap_pyfunction!(convert, m)?)?;
     Ok(())
 }
