@@ -1,4 +1,4 @@
-import pixelart
+import pixelart_modules as pixelart
 import numpy as np
 import cv2
 import time

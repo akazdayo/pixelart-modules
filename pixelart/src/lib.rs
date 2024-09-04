@@ -34,7 +34,7 @@ fn color_change<'py>(
 }
 
 #[pymodule]
-fn pixelart(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn pixelart_modules(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     #[pyfn(m)]
     #[pyo3(name = "convert")]
     fn convert_py<'py>(
