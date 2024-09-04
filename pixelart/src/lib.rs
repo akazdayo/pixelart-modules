@@ -41,7 +41,7 @@ fn pixelart(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
         py: Python<'py>,
         img: pyo3::prelude::Bound<'_, PyAny>, // NumPy Array
         color_palette: PyReadonlyArray2<'py, usize>,
-    ) -> PyResult<&'py PyArray3<usize>> {
+    ) -> PyResult<Bound<'py, PyArray3<usize>>> {
         // NumPy配列をndarrayに変換
         let color_palette = color_palette.as_array();
         let shape: (usize, usize, usize) = img.getattr("shape")?.extract()?;
@@ -66,7 +66,7 @@ fn pixelart(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
         // output
         let output = changed.to_owned();
-        Ok(output.into_pyarray(py))
+        Ok(output.into_pyarray_bound(py))
     }
     Ok(())
 }
