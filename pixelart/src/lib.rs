@@ -1,8 +1,14 @@
 use numpy::{
+    convert::IntoPyArray,
     ndarray::{Array3, ArrayBase, Dim, ViewRepr},
-    PyReadonlyArray2,
+    PyArray3, PyReadonlyArray2,
 };
-use pyo3::prelude::*;
+use pyo3::{
+    prelude::{Bound, PyAnyMethods},
+    pymodule,
+    types::{PyAny, PyModule},
+    PyResult, Python,
+};
 
 fn color_change<'py>(
     r: f64,
@@ -27,41 +33,40 @@ fn color_change<'py>(
     Ok(color_name)
 }
 
-#[pyfunction]
-fn convert<'py>(
-    img: Bound<'_, PyAny>, // NumPy Array
-    color_palette: PyReadonlyArray2<'py, usize>,
-) -> PyResult<Array3<usize>> {
-    // NumPy配列をndarrayに変換
-    let color_palette = color_palette.as_array();
-
-    // 画像のサイズを取得
-    let shape: (usize, usize, usize) = img.getattr("shape")?.extract()?;
-    let (h, w, _) = shape;
-
-    // 出力用のndarrayを作成
-    let mut changed: Array3<usize> = Array3::zeros((h, w, 3));
-
-    for y in 0..h {
-        for x in 0..w {
-            let color = color_change(
-                img.get_item((y, x, 0))?.extract::<usize>()? as f64,
-                img.get_item((y, x, 1))?.extract::<usize>()? as f64,
-                img.get_item((y, x, 2))?.extract::<usize>()? as f64,
-                &color_palette,
-            )
-            .unwrap();
-            changed[[y, x, 0]] = color[0];
-            changed[[y, x, 1]] = color[1];
-            changed[[y, x, 2]] = color[2];
-        }
-    }
-    Ok(changed)
-}
-
-/// A Python module implemented in Rust.
 #[pymodule]
-fn pixelart(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(convert, m)?)?;
+fn pixelart(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
+    #[pyfn(m)]
+    #[pyo3(name = "convert")]
+    fn convert_py<'py>(
+        py: Python<'py>,
+        img: pyo3::prelude::Bound<'_, PyAny>, // NumPy Array
+        color_palette: PyReadonlyArray2<'py, usize>,
+    ) -> PyResult<&'py PyArray3<usize>> {
+        // NumPy配列をndarrayに変換
+        let color_palette = color_palette.as_array();
+        let shape: (usize, usize, usize) = img.getattr("shape")?.extract()?;
+        let (h, w, _) = shape;
+        let mut changed: Array3<usize> = Array3::zeros((h, w, 3));
+
+        for y in 0..h {
+            for x in 0..w {
+                let color = color_change(
+                    img.get_item((y, x, 0))?.extract::<usize>()? as f64,
+                    img.get_item((y, x, 1))?.extract::<usize>()? as f64,
+                    img.get_item((y, x, 2))?.extract::<usize>()? as f64,
+                    &color_palette,
+                )
+                .unwrap();
+                changed[[y, x, 0]] = color[0];
+                changed[[y, x, 1]] = color[1];
+                changed[[y, x, 2]] = color[2];
+            }
+        }
+        println!("{:?}", changed);
+
+        // output
+        let output = changed.to_owned();
+        Ok(output.into_pyarray(py))
+    }
     Ok(())
 }
