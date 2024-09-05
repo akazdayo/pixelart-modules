@@ -62,7 +62,6 @@ fn pixelart_modules(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
                 changed[[y, x, 2]] = color[2];
             }
         }
-        println!("{:?}", changed);
 
         // output
         let output = changed.to_owned();

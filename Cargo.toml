@@ -9,5 +9,7 @@ name = "pixelart_modules"
 crate-type = ["cdylib"]
 
 [dependencies]
+linfa = "0.7.0"
+linfa-clustering = "0.7.0"
 numpy = "0.21.0"
 pyo3 = "0.21.0"
