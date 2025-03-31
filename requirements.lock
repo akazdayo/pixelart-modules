@@ -14,5 +14,5 @@ maturin==1.7.1
     # via pixelart-modules
 pip==25.0.1
     # via pixelart-modules
-tomli==2.0.1
+tomli==2.2.1
     # via maturin

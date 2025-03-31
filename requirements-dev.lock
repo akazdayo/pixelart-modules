@@ -18,5 +18,5 @@ opencv-python==4.10.0.84
 pillow==10.4.0
 pip==25.0.1
     # via pixelart-modules
-tomli==2.0.1
+tomli==2.2.1
     # via maturin
